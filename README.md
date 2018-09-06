@@ -1,23 +1,28 @@
 # FindFilesMenuCommand
-visual studio addon that searches folder and adds matching files to projects
+Extension for Visual Studio that searches folder and adds matching files to projects
 
 ### Install 
 
-Build the project then run `FindFilesMenuCommand.vsix` that should be located in the `bin\Debug` folder
+1. Build the project
+2. Run `FindFilesMenuCommand.vsix` located in the `bin\Debug` folder
 
 ### Update
 
-Increase version in `source.extension.vsixmanifest` then build and run `FindFilesMenuCommand.vsix`
+1. Increase version in `source.extension.vsixmanifest`
+2. Rebuild 
+3. Run `FindFilesMenuCommand.vsix`
 
 [More Info](https://docs.microsoft.com/en-us/visualstudio/extensibility/how-to-update-a-visual-studio-extension?view=vs-2017)
 
 # How to use
 
-By pressing the `Find matching files for projects` button in the tool menu a `AutoFindFiles.xml` file should be created with the current projects. The default xml is below. 
+A `Find matching files for projects` button will be in the tool menu.
+
+The extension creates a `AutoFindFiles.xml` file if one does not exist or failed to load. The file will contain XML for the current projects. The default XML is below. 
 
 Update the folders and matches for the files you want to add, then set enabled to true.
 
-After you have updated `AutoFindFiles.xml` then press the `Find matching files for projects` button again and the extension will run and add files
+Run the extension again to add files to projects.
 
 ```xml
 <Project>
