@@ -21,13 +21,13 @@ After you have updated `AutoFindFiles.xml` then press the `Find matching files f
 
 ```xml
 <Project>
-      <enabled>false</enabled>
-      <name>{ProjectName}</name>
-      <folders>
-        <folder>./</folder>
-      </folders>
-      <matches>
-        <match>*.cs</match>
-      </matches>
-    </Project>
+  <enabled>false</enabled>
+  <name>{ProjectName}</name>
+  <folders>
+    <folder>./</folder>
+  </folders>
+  <matches>
+    <match>*.cs</match>
+  </matches>
+</Project>
 ```
