@@ -5,7 +5,8 @@ using System.ComponentModel.Design;
 using Microsoft.VisualStudio.Shell;
 using EnvDTE80;
 using EnvDTE;
-using System.Collections.Generic;
+using Microsoft.VisualStudio.Shell.Interop;
+using System.Windows.Forms;
 
 namespace JamesFrowen.FindFilesMenuCommand
 {
@@ -15,6 +16,7 @@ namespace JamesFrowen.FindFilesMenuCommand
     internal sealed class FindFilesCommand
     {
         private DTE2 dte2;
+        private const string FULL_PATH = "FullPath";
 
         private void refreshFileList()
         {
@@ -24,69 +26,71 @@ namespace JamesFrowen.FindFilesMenuCommand
             }
 
             var solution = dte2.Solution;
+            FindFilesXML findFiles;
+            if (!FindFilesXML.Load(solution, out findFiles))
+            {
+                findFiles = FindFilesXML.CreateNew(solution);
+                MessageBox.Show("Created new FindFilesXML\nPlease edit it and run again");
+                return;
+            }
+
             var projects = dte2.Solution.Projects;
-            var dir = Path.GetDirectoryName(solution.FileName);
-            var sourceDir = Path.Combine(dir, "source");
+            var basePath = FindFilesXML.GetBasePath(solution);
+
+            MessageBox.Show("Starting Auto find files");
+
             foreach (Project proj in projects)
-            { 
-                if (proj.Name.ToLower().Contains("editor"))
+            {
+                if (!findFiles.ProjectExists(proj.Name))
                 {
-                    addFiles(Path.Combine(sourceDir, "editor"), proj, true);
+                    MessageBox.Show(string.Format("Project with name '{0}' does not exist", proj.Name));
+                    continue;
                 }
-                else
+                var data = findFiles[proj.Name];
+                if (data.enabled)
                 {
-                    addFiles(sourceDir, proj, false);
+                    refreshProject(data, proj, basePath);
                 }
             }
+
+            MessageBox.Show("Finished Auto find files");
         }
 
-        private void addFiles(string dir, Project proj, bool editor)
+        private void refreshProject(FindFilesXML.Project data, Project proj, string basePath)
         {
-            var files = getCSFiles(dir, editor);
-
-            foreach (var file in files)
-            {
-                var item = proj.ProjectItems.AddFromFile(file.FullName);
-            }
+            removeItemsThatDontExist(proj);
+            findAndAddItemsFromMatch(data, proj, basePath);
             proj.Save();
         }
-
-        private FileInfo[] getCSFiles(string dir, bool editor)
+        
+        private static void findAndAddItemsFromMatch(FindFilesXML.Project data, Project proj, string basePath)
         {
-            var paths = new List<string>();
-            getFilesRecursively(dir, paths, editor);
-            var csFiles = new List<FileInfo>();
-            foreach (var path in paths)
+            foreach (var folder in data.folders)
             {
-                var file = new FileInfo(path);
-                if (file.Extension == ".cs")
+                var fullPath = Path.Combine(basePath, folder);
+                foreach (var match in data.matches)
                 {
-                    csFiles.Add(file);
-                }
-            }
-            return csFiles.ToArray();
-        }
-
-        private void getFilesRecursively(string current, List<string> list, bool editor, bool inSideEditorFolder = false)
-        {
-            foreach (string f in Directory.GetFiles(current))
-            {
-                list.Add(f);
-            }
-            foreach (string d in Directory.GetDirectories(current))
-            {
-                var nextIsEditorFolder = d.ToLower().Contains("editor");
-                if (editor && (inSideEditorFolder || nextIsEditorFolder))
-                {
-                    getFilesRecursively(d, list, true, true);
-                }
-                else if (!editor && !nextIsEditorFolder)
-                {
-                    getFilesRecursively(d, list, false, false);
+                    var allFiles = Directory.GetFiles(fullPath, match, SearchOption.AllDirectories);
+                    foreach (var file in allFiles)
+                    {
+                        string fullName = Path.GetFullPath(file);
+                        proj.ProjectItems.AddFromFile(fullName);
+                    }
                 }
             }
         }
 
+        private static void removeItemsThatDontExist(Project proj)
+        {
+            foreach (ProjectItem item in proj.ProjectItems)
+            {
+                var itemPath = item.Properties.Item(FULL_PATH).Value as string;
+                if (!File.Exists(itemPath))
+                {
+                    item.Remove();
+                }
+            }
+        }
 
         /// <summary>
         /// Command ID.

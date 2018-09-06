@@ -56,7 +56,7 @@
         <Parent guid="guidFindFilesCommandPackageCmdSet" id="MyMenuGroup" />
         <Icon guid="guidImages" id="bmpPic1" />
         <Strings>
-          <ButtonText>Add All .CS Files to unity based projects</ButtonText>
+          <ButtonText>Find matching files for projects</ButtonText>
         </Strings>
       </Button>
     </Buttons>
