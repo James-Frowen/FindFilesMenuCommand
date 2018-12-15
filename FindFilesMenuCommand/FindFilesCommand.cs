@@ -1,11 +1,9 @@
-﻿using System;
-using System.IO;
-using System.Diagnostics;
-using System.ComponentModel.Design;
-using Microsoft.VisualStudio.Shell;
+﻿using EnvDTE;
 using EnvDTE80;
-using EnvDTE;
-using Microsoft.VisualStudio.Shell.Interop;
+using Microsoft.VisualStudio.Shell;
+using System;
+using System.ComponentModel.Design;
+using System.IO;
 using System.Windows.Forms;
 
 namespace JamesFrowen.FindFilesMenuCommand
@@ -20,12 +18,12 @@ namespace JamesFrowen.FindFilesMenuCommand
 
         private void refreshFileList()
         {
-            if (dte2 == null)
+            if (this.dte2 == null)
             {
-                dte2 = (DTE2)this.ServiceProvider.GetService(typeof(DTE));
+                this.dte2 = (DTE2)this.ServiceProvider.GetService(typeof(DTE));
             }
 
-            var solution = dte2.Solution;
+            var solution = this.dte2.Solution;
             FindFilesXML findFiles;
             if (!FindFilesXML.Load(solution, out findFiles))
             {
@@ -34,10 +32,13 @@ namespace JamesFrowen.FindFilesMenuCommand
                 return;
             }
 
-            var projects = dte2.Solution.Projects;
+            var projects = this.dte2.Solution.Projects;
             var basePath = FindFilesXML.GetBasePath(solution);
 
-            MessageBox.Show("Starting Auto find files");
+            new System.Threading.Tasks.Task(() =>
+            {
+                MessageBox.Show("Starting Auto find files");
+            }).Start();
 
             foreach (Project proj in projects)
             {
@@ -49,7 +50,7 @@ namespace JamesFrowen.FindFilesMenuCommand
                 var data = findFiles[proj.Name];
                 if (data.enabled)
                 {
-                    refreshProject(data, proj, basePath);
+                    this.refreshProject(data, proj, basePath);
                 }
             }
 
@@ -62,7 +63,7 @@ namespace JamesFrowen.FindFilesMenuCommand
             findAndAddItemsFromMatch(data, proj, basePath);
             proj.Save();
         }
-        
+
         private static void findAndAddItemsFromMatch(FindFilesXML.Project data, Project proj, string basePath)
         {
             foreach (var folder in data.folders)
